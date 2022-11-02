@@ -38,7 +38,7 @@ public class FrequencyOfMentionFocusStrategy implements FocusStrategy {
                 primaryCountry = countryCode;
             }
         }
-        logger.info("Found primary country "+primaryCountry);
+        logger.debug("Found primary country {}", primaryCountry);
         // return results
         if(primaryCountry!=null) {
             results.add( new FocusLocation(
@@ -73,7 +73,7 @@ public class FrequencyOfMentionFocusStrategy implements FocusStrategy {
             	primaryState = stateCode;
             }
         }
-        logger.info("Found primary state "+primaryState.toString());
+        logger.debug("Found primary state {}", primaryState);
         // return results
         if(primaryState!=null) {
             int primaryStateCount = stateCounts.get(primaryState);
@@ -108,7 +108,7 @@ public class FrequencyOfMentionFocusStrategy implements FocusStrategy {
                 primaryCity = geoname;
             }
         }
-        logger.info("Found primary city "+primaryCity.toString());
+        logger.debug("Found primary city {}", primaryCity);
         // return results
         if(primaryCity!=null) {
             int primaryCityCount = cityCounts.get(primaryCity);

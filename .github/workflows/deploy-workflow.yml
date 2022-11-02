@@ -1,0 +1,134 @@
+name: Deploy
+on:
+  push:
+    branches: [ develop, master ]
+jobs:
+  check-build-push:
+    name: Build and publish
+    runs-on: ubuntu-20.04
+    env:
+      SERVICE_NAME: chat-service-cliff-annotator
+      DOCKER_REGISTRY_URI: ghcr.io/childrescuecoalition/chat-service-cliff-annotator
+    outputs:
+      docker-tag: ${{ steps.variables.outputs.complete-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Turnstyle
+        uses: softprops/turnstyle@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+
+      - name: Build
+        run:
+          mvn package -DskipTests
+
+      - name: Install and run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.MAHISOFT_USER_TOKEN }}
+        run: |
+          echo '{
+                  "branches": ["master"],
+                  "plugins":[
+                    "@semantic-release/commit-analyzer",
+                    "@semantic-release/release-notes-generator",
+                    ["@semantic-release/exec", { "publish" : "--no-ci" }]
+                  ]
+                }' > .releaserc
+          sudo npm install -g --save-dev semantic-release
+          sudo npm -g install @semantic-release/git@8.0.0 @semantic-release/github @semantic-release/exec
+          semantic-release --branches master --repository-url ${{ github.repository }} -t '${version}'
+
+      - name: Read tag and commit information
+        id: version-tag
+        run: |
+          echo "::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))"
+          echo "::set-output name=last-commit::$(git rev-parse --short HEAD)"
+
+
+      - name: Read tag and commit information
+        id: version-tag
+        run: |
+          echo "::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))"
+          echo "::set-output name=last-commit::$(git rev-parse --short HEAD)"
+
+      - name: Generate Develop Variables
+        id: variables
+        env:
+          VERSION_TAG: ${{ steps.version-tag.outputs.version-tag }}
+          LAST_COMMIT: ${{ steps.version-tag.outputs.last-commit }}
+          GITHUB_BRANCH: ${{ github.ref }}
+        run: |
+          if [ "$GITHUB_BRANCH" != "refs/heads/master" ]
+          then
+            echo "::set-output name=project-version::${VERSION_TAG}-SNAPSHOT"
+            echo "::set-output name=complete-version::${VERSION_TAG}-SNAPSHOT-${LAST_COMMIT}"
+            echo "::set-output name=docker-tag::${LAST_COMMIT}"
+            echo "::set-output name=is-release::false"
+          else
+            echo "::set-output name=project-version::${VERSION_TAG}"
+            echo "::set-output name=complete-version::${VERSION_TAG}"
+            echo "::set-output name=docker-tag::latest"
+            echo "::set-output name=is-release::true"
+          fi
+
+      - name: Load ka-build action
+        uses: actions/checkout@v2
+        with:
+          repository: mahisoft/ka-build
+          ref: v1-gcr-docker-build
+          token: ${{ secrets.MAHISOFT_USER_TOKEN }}
+          path: .github/actions/ka-build
+
+      - name: Build and publish to docker registry
+        uses: ./.github/actions/ka-build
+        with:
+          docker-registry-base-url: ghcr.io
+          docker-credentials-usr: github.repository_owner
+          docker-credentials-psw: ${{ github.token }}
+          project-version: ${{ steps.variables.outputs.project-version }}
+          complete-version: ${{ steps.variables.outputs.complete-version }}
+          docker-tag: ${{ steps.variables.outputs.docker-tag }}
+  deploy:
+    needs: check-build-push
+    env:
+      KUBE_CONTEXT: ${{ secrets.KUBE_CONTEXT }}
+      KUBECONFIG: "./config"
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+    steps:
+      - name: Load vpn-connect action
+        uses: actions/checkout@v2
+        with:
+          repository: ChildRescueCoalition/crc-github-action-steps
+          ref: v1.0.1
+          token: ${{ secrets.MAHISOFT_USER_TOKEN }}
+          path: .github/actions/vpn-connect
+
+      - name: Connect to VPN
+        uses: ./.github/actions/vpn-connect
+        with:
+          vpn-server-ipv4: ${{ secrets.VPN_SERVER_IPV4 }}
+          psk: ${{ secrets.PSK }}
+          vpn-username: ${{ secrets.VPN_USERNAME }}
+          vpn-password: ${{ secrets.PSW }}
+
+      - name: Create kubernetes config file
+        run: |
+          echo "$KUBE_CONTEXT" > config
+
+      - name: Upgrade service in cluster
+        run: |
+          kubectl set image deployment/chat-service-cliff-annotator-chat-service-cliff-annotator network-persistence-service=docker.pkg.github.com/childrescuecoalition/network-persistence-service/network-persistence-service:${{needs.check-build-push.outputs.docker-tag}} -n chat
+
+      - name: Disconnect vpn
+        run: |
+          sudo nmcli c down CRC

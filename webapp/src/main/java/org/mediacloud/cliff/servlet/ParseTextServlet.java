@@ -42,7 +42,7 @@ public class ParseTextServlet extends HttpServlet{
     @SuppressWarnings("rawtypes")
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException{
 
-        logger.info("Text Parse Request from "+request.getRemoteAddr());
+        logger.debug("Text Parse Request from "+request.getRemoteAddr());
         request.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType("application/json");
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -76,7 +76,7 @@ public class ParseTextServlet extends HttpServlet{
             	results = ParseManager.getErrorText(sw.toString());
             }
             String jsonResults = gson.toJson(results);
-            logger.info(jsonResults);
+            logger.debug(jsonResults);
             response.getWriter().write(jsonResults);
         }
 	}
