@@ -47,12 +47,6 @@ jobs:
           sudo npm -g install @semantic-release/git@8.0.0 @semantic-release/github @semantic-release/exec
           semantic-release --branches master --repository-url ${{ github.repository }} -t '${version}'
 
-      - name: Read tag and commit information
-        id: version-tag
-        run: |
-          echo "::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))"
-          echo "::set-output name=last-commit::$(git rev-parse --short HEAD)"
-
 
       - name: Read tag and commit information
         id: version-tag
