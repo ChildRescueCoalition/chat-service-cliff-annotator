@@ -1,8 +1,8 @@
 package org.mediacloud.cliff.servlet;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang.time.StopWatch;
 import org.mediacloud.cliff.ParseManager;
-import org.mediacloud.cliff.extractor.EntityExtractor;
 import org.mediacloud.cliff.servlet.dto.request.BatchParseTextRequest;
 import org.mediacloud.cliff.servlet.dto.response.BatchParseTextResponse;
 import org.mediacloud.cliff.servlet.dto.response.ParseTextResponse;
@@ -14,18 +14,18 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -60,9 +60,16 @@ public class BatchParseTextServlet extends HttpServlet {
             }
         }
 
-        Collection<ParseTextResponse> responses = batchRequest.getRequests().stream()
-                .map(parseTextRequest -> {
+        ExecutorService executorService = Executors.newFixedThreadPool(batchRequest.getNumOfThreads());
+        logger.info("Running batch of {} elements using {} threads", batchRequest.getRequests().size(), batchRequest.getNumOfThreads());
+
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        Collection<CompletableFuture<ParseTextResponse>> futuresList = batchRequest.getRequests().stream()
+                .map(parseTextRequest -> CompletableFuture.supplyAsync(() -> {
                     HashMap result;
+//                    logger.info("Running in thread {}", Thread.currentThread().getName());
                     try {
                         result = ParseManager.parseFromText(parseTextRequest.getText(), manuallyReplaceDemonyms, parseTextRequest.getLanguage());
                     } catch (Exception e) {   // try to give the user something useful
@@ -78,13 +85,25 @@ public class BatchParseTextServlet extends HttpServlet {
                             .externalId(parseTextRequest.getExternalId())
                             .result(result)
                             .build();
-                })
-                .collect(Collectors.toSet());
+                }, executorService))
+                .collect(Collectors.toList());
+
+        CompletableFuture[] futuresArray = futuresList.toArray(CompletableFuture[]::new);
+
+        CompletableFuture.allOf(futuresArray).join();
+        stopWatch.stop();
+
+        Collection<ParseTextResponse> responses = futuresList.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
         Long milliseconds = responses.stream()
                 .map(a -> (Long) a.getResult().get("milliseconds"))
                 .map(a -> a == null ? 0 : a)
                 .reduce(Long::sum)
                 .orElse(0L);
-        response.getWriter().write(gson.toJson(new BatchParseTextResponse(responses, milliseconds)));
+        response.getWriter().write(gson.toJson(BatchParseTextResponse.builder()
+                .results(responses)
+                .actualMilliseconds(stopWatch.getTime())
+                .sumOfMilliseconds(milliseconds)));
     }
 }
