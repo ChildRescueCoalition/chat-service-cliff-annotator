@@ -11,6 +11,6 @@ import java.util.Collection;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BatchParseTextResponse {
-    @NotEmpty
     public Collection<ParseTextResponse> results;
+    public Long milliseconds;
 }

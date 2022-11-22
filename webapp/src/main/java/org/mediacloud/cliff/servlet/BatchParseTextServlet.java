@@ -80,6 +80,11 @@ public class BatchParseTextServlet extends HttpServlet {
                             .build();
                 })
                 .collect(Collectors.toSet());
-        response.getWriter().write(gson.toJson(new BatchParseTextResponse(responses)));
+        Long milliseconds = responses.stream()
+                .map(a -> (Long) a.getResult().get("milliseconds"))
+                .map(a -> a == null ? 0 : a)
+                .reduce(Long::sum)
+                .orElse(0L);
+        response.getWriter().write(gson.toJson(new BatchParseTextResponse(responses, milliseconds)));
     }
 }

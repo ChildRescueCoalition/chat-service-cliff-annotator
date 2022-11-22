@@ -13,8 +13,6 @@ import java.util.HashMap;
 @NoArgsConstructor
 @Builder
 public class ParseTextResponse {
-    @NotBlank
     public String externalId;
-    @NotBlank
     public HashMap result;
 }
