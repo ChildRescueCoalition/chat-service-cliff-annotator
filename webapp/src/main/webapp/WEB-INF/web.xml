@@ -14,7 +14,16 @@
          <url-pattern>/parse/text</url-pattern>
      </servlet-mapping>
 
-     <servlet>
+    <servlet>
+        <servlet-name>BatchParseTextServlet</servlet-name>
+        <servlet-class>org.mediacloud.cliff.servlet.BatchParseTextServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BatchParseTextServlet</servlet-name>
+        <url-pattern>/parse/text/batch</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
          <servlet-name>ParseNlpJsonServlet</servlet-name>
          <servlet-class>org.mediacloud.cliff.servlet.ParseNlpJsonServlet</servlet-class>
      </servlet>
