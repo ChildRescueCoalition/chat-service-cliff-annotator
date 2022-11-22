@@ -121,7 +121,7 @@ jobs:
 
       - name: Upgrade service in cluster
         run: |
-          kubectl set image deployment/chat-service-cliff-annotator-chat-service-cliff-annotator network-persistence-service=docker.pkg.github.com/childrescuecoalition/network-persistence-service/network-persistence-service:${{needs.check-build-push.outputs.docker-tag}} -n chat
+          kubectl set image deployment/chat-service-cliff-annotator-chat-service-cliff-annotator  chat-service-cliff-annotator=ghcr.io/childrescuecoalition/chat-service-cliff-annotator/chat-service-cliff-annotator:${{needs.check-build-push.outputs.docker-tag}} -n chat
 
       - name: Disconnect vpn
         run: |
