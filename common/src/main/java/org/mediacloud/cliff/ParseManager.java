@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.mediacloud.cliff.extractor.EntityExtractor;
 import org.mediacloud.cliff.extractor.EntityExtractorService;
 import org.mediacloud.cliff.extractor.ExtractedEntities;
@@ -114,8 +115,16 @@ public class ParseManager {
             return getErrorText("No text");
         }
         try {
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
             ExtractedEntities entities = extractAndResolve(text,manuallyReplaceDemonyms, language);
+            stopWatch.stop();
+            logger.debug("Time spent extractAndResolve {}", stopWatch);
+            stopWatch.reset();
+            stopWatch.start();
             results = parseFromEntities(entities);
+            stopWatch.stop();
+            logger.debug("Time spend parseFromEntities {}", stopWatch);
         } catch (Exception e) {
             logger.error(e.toString(), e);
             results = getErrorText(e.toString());
