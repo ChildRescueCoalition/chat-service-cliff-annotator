@@ -85,7 +85,7 @@ public class BatchParseTextServlet extends HttpServlet {
                             .externalId(parseTextRequest.getExternalId())
                             .result(result)
                             .build();
-                }, executorService))
+                }))
                 .collect(Collectors.toList());
 
         CompletableFuture[] futuresArray = futuresList.toArray(CompletableFuture[]::new);
