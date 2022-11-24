@@ -85,7 +85,7 @@ public class BatchParseTextServlet extends HttpServlet {
                             .externalId(parseTextRequest.getExternalId())
                             .result(result)
                             .build();
-                }))
+                }, executorService))
                 .collect(Collectors.toList());
 
         CompletableFuture[] futuresArray = futuresList.toArray(CompletableFuture[]::new);
@@ -101,6 +101,7 @@ public class BatchParseTextServlet extends HttpServlet {
                 .map(a -> a == null ? 0 : a)
                 .reduce(Long::sum)
                 .orElse(0L);
+        executorService.shutdown();
         response.getWriter().write(gson.toJson(BatchParseTextResponse.builder()
                 .results(responses)
                 .actualMilliseconds(stopWatch.getTime())
