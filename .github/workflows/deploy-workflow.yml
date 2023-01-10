@@ -30,6 +30,10 @@ jobs:
       - name: Build
         run:
           mvn package -DskipTests
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
       - name: Install and run semantic-release
         env:
