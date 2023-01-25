@@ -24,6 +24,16 @@
     </servlet-mapping>
 
     <servlet>
+        <servlet-name>BatchParseTextCompressedServlet</servlet-name>
+        <servlet-class>org.mediacloud.cliff.servlet.BatchParseTextCompressedServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BatchParseTextCompressedServlet</servlet-name>
+        <url-pattern>/parse/text/batch/compressed</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet>
          <servlet-name>ParseNlpJsonServlet</servlet-name>
          <servlet-class>org.mediacloud.cliff.servlet.ParseNlpJsonServlet</servlet-class>
      </servlet>

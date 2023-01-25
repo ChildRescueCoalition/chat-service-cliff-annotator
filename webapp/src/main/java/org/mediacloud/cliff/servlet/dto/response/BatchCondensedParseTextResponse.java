@@ -5,15 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.Collection;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BatchParseTextResponse {
-    public Collection<ParseTextResponse> results;
-    public Long actualMilliseconds;
-    public Long sumOfMilliseconds;
+public class BatchCondensedParseTextResponse {
+    private Collection<ParseTextResponse> results;
+    private Long actualMilliseconds;
+    private Long sumOfMilliseconds;
 }

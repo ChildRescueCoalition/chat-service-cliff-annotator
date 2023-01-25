@@ -20,11 +20,11 @@ import java.util.Set;
  *
  * @author rahulb
  */
-public class BatchParseTextServlet extends HttpServlet {
+public class BatchParseTextCompressedServlet extends HttpServlet {
 
     private final static Gson gson = new Gson();
 
-    public BatchParseTextServlet() {
+    public BatchParseTextCompressedServlet() {
     }
 
 
@@ -45,6 +45,6 @@ public class BatchParseTextServlet extends HttpServlet {
             }
         }
 
-        response.getWriter().write(gson.toJson(ParseTextService.parseTextInBatches(batchRequest, manuallyReplaceDemonyms)));
+        response.getWriter().write(gson.toJson(ParseTextService.parseTextInBatchesCompressed(batchRequest, manuallyReplaceDemonyms)));
     }
 }

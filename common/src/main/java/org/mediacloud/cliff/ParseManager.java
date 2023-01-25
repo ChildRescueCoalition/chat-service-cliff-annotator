@@ -38,7 +38,7 @@ public class ParseManager {
 
     /**
      * Major: major new features or capabilities
-     * Minor: small new features, changes to the json result format, or changes to the disambiguation algorithm
+     * Minor: small new features, changes to the json mentions format, or changes to the disambiguation algorithm
      * Revision: minor change or bug fix
      */
     static final String PARSER_VERSION = "2.6.1";

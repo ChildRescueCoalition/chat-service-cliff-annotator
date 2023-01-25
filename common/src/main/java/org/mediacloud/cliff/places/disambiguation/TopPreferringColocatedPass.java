@@ -47,6 +47,6 @@ public class TopPreferringColocatedPass extends GenericPass {
 
     @Override
     public String getDescription() {
-        return "Pick the top result, preferrring ones in the a country found already (last ditch effort)";
+        return "Pick the top mentions, preferrring ones in the a country found already (last ditch effort)";
     }
 }
