@@ -15,7 +15,7 @@ public class ParseTextMapper {
                 .featureCode((String) mentionMap.get("featureCode"))
                 .featureClass((String) mentionMap.get("featureClass"))
                 .lon((Double) mentionMap.get("lon"))
-                .lat((Double) mentionMap.get("lan"))
+                .lat((Double) mentionMap.get("lat"))
                 .countryCode((String) mentionMap.get("countryCode"))
                 .place((String) mentionMap.get("name"))
                 .mentionSource(Mention.MentionSource.builder()
