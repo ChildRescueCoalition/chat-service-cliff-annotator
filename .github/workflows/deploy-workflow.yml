@@ -27,6 +27,12 @@ jobs:
         with:
           java-version: '11'
 
+      - name: Configure Maven credentials
+        env:
+          MAVEN_SETTINGS_XML: ${{ secrets.MAVEN_SETTINGS_XML }}
+        run:
+          echo $MAVEN_SETTINGS_XML > ~/.m2/settings.xml
+
       - name: Build
         run:
           mvn package -DskipTests

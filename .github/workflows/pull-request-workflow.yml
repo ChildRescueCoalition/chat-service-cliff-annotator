@@ -27,7 +27,6 @@ jobs:
         run:
           echo $MAVEN_SETTINGS_XML > ~/.m2/settings.xml
 
-
       - name: Build
         run:
           mvn package -DskipTests
