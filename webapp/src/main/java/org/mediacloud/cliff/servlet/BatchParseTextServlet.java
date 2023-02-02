@@ -1,7 +1,7 @@
 package org.mediacloud.cliff.servlet;
 
+import com.crc.commons.dto.cliff.request.BatchParseTextRequest;
 import com.google.gson.Gson;
-import org.mediacloud.cliff.servlet.dto.request.BatchParseTextRequest;
 import org.mediacloud.cliff.servlet.service.ParseTextService;
 import org.mediacloud.cliff.servlet.utils.RequestUtils;
 
