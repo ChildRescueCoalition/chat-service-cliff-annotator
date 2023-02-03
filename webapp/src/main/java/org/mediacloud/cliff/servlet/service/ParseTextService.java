@@ -1,14 +1,14 @@
 package org.mediacloud.cliff.servlet.service;
 
+import com.crc.commons.dto.cliff.Mention;
+import com.crc.commons.dto.cliff.request.BatchParseTextRequest;
+import com.crc.commons.dto.cliff.response.BatchCondensedParseTextResponse;
+import com.crc.commons.dto.cliff.response.BatchRawParseTextResponse;
+import com.crc.commons.dto.cliff.response.ParseTextResponse;
+import com.crc.commons.dto.cliff.response.RawParseTextResponse;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mediacloud.cliff.ParseManager;
-import org.mediacloud.cliff.servlet.dto.Mention;
-import org.mediacloud.cliff.servlet.dto.request.BatchParseTextRequest;
-import org.mediacloud.cliff.servlet.dto.response.BatchCondensedParseTextResponse;
-import org.mediacloud.cliff.servlet.dto.response.BatchRawParseTextResponse;
-import org.mediacloud.cliff.servlet.dto.response.ParseTextResponse;
-import org.mediacloud.cliff.servlet.dto.response.RawParseTextResponse;
 import org.mediacloud.cliff.servlet.mappers.ParseTextMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +56,7 @@ public class ParseTextService {
                         result = ParseManager.getErrorText(sw.toString());
                     }
 
-                    return RawParseTextResponse.builder()
-                            .externalId(parseTextRequest.getExternalId())
-                            .result(result)
-                            .build();
+                    return new RawParseTextResponse(parseTextRequest.getExternalId(), result);
                 }, executorService))
                 .collect(Collectors.toList());
 
@@ -77,20 +74,16 @@ public class ParseTextService {
                 .reduce(Long::sum)
                 .orElse(0L);
         executorService.shutdown();
-        return BatchRawParseTextResponse.builder()
-                .results(responses)
-                .actualMilliseconds(stopWatch.getTime())
-                .sumOfMilliseconds(milliseconds)
-                .build();
+        return new BatchRawParseTextResponse(responses, stopWatch.getTime(), milliseconds);
     }
 
-    private static Map<Pair<String, String>, Long> toCountryStateCountMap(List<Mention> mentions) {
+    private static Map<Pair<String, String>, Long> toCountryStateCountMap(Collection<Mention> mentions) {
         return mentions.stream()
                 .map(m -> Pair.of(m.getCountryCode(), m.getStateCode()))
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
 
-    private static Map<String, Long> toCountryMap(List<Mention> mentions) {
+    private static Map<String, Long> toCountryMap(Collection<Mention> mentions) {
         return mentions.stream()
                 .map(Mention::getCountryCode)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -105,7 +98,7 @@ public class ParseTextService {
             }
             geonameInfo = (HashMap<?, ?>) geonameInfo.get("parent");
         }
-        
+
         return Optional.empty();
     }
 
@@ -125,24 +118,40 @@ public class ParseTextService {
                     return !STATE_FEATURE_CODE.equals(mention.getFeatureCode()) || countryStateCountMap.get(countryStateKey).equals(1L);
                 })
                 // counties need to have the "county" field populated
-                .peek(mention -> {
+                .map(mention -> {
                     if (COUNTY_FEATURE_CODE.equals(mention.getFeatureCode())) {
-                        mention.setCounty(mention.getPlace());
+                        return updateCounty(mention, mention.getPlace());
                     }
+                    return mention;
                 })
                 // "places" need the county field populated.
-                .peek(mention -> {
+                .map(mention -> {
                     if (!POPULATED_AREAS_CLASS.equals(mention.getFeatureClass())) {
-                        getCountyName(mention).ifPresent(mention::setCounty);
+                        Optional<Mention> optMention = getCountyName(mention).map(county -> updateCounty(mention, county));
+                        if (optMention.isPresent()) {
+                            return optMention.get();
+                        }
                     }
+                    return mention;
                 })
                 .collect(Collectors.toList());
 
-        // Filling the missing spots for non-PPL places.
+        return new ParseTextResponse(parseTextResponse.getExternalId(), condensedMentions);
+    }
 
-        parseTextResponse.setMentions(condensedMentions);
-
-        return parseTextResponse;
+    private static Mention updateCounty(Mention mention, String county) {
+        return mention.copy(
+                mention.getCountryCode(),
+                mention.getStateCode(),
+                county,
+                mention.getPlace(),
+                mention.getLat(),
+                mention.getLon(),
+                mention.getId(),
+                mention.getMentionSource(),
+                mention.getFeatureCode(),
+                mention.getFeatureClass()
+        );
     }
 
     public static BatchCondensedParseTextResponse parseTextInBatchesCompressed(
@@ -155,12 +164,7 @@ public class ParseTextService {
                 .filter(parseTextResponse -> !parseTextResponse.getMentions().isEmpty())
                 .collect(Collectors.toList());
 
-        BatchCondensedParseTextResponse condensedResponse = new BatchCondensedParseTextResponse();
-        condensedResponse.setResults(results);
-        condensedResponse.setActualMilliseconds(null);
-        condensedResponse.setSumOfMilliseconds(null);
-
-        return condensedResponse;
+        return new BatchCondensedParseTextResponse(results, null, null);
     }
 
 }
