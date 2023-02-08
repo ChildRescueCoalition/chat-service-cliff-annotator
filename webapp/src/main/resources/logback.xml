@@ -12,7 +12,10 @@
     </layout>
   </appender>
 
-  <logger name="org.mediacloud.cliff" level="DEBUG" />
+  <logger name="org.mediacloud.cliff" level="INFO" />
+  <logger name="org.mediacloud.cliff.places" level="OFF" />
+  <logger name="org.mediacloud.cliff.ParseManager" level="OFF" />
+  <logger name="org.mediacloud.cliff.EntityParser" level="OFF" />
 
   <root>
     <level value="INFO"/>

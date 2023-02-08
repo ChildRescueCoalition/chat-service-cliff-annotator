@@ -6,6 +6,8 @@ import com.crc.commons.dto.cliff.response.BatchCondensedParseTextResponse;
 import com.crc.commons.dto.cliff.response.BatchRawParseTextResponse;
 import com.crc.commons.dto.cliff.response.ParseTextResponse;
 import com.crc.commons.dto.cliff.response.RawParseTextResponse;
+import com.crc.commons.dto.singlestore.SingleStoreExternalFunctionRequest;
+import com.crc.commons.dto.singlestore.SingleStoreExternalFunctionResponse;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mediacloud.cliff.ParseManager;
@@ -37,6 +39,7 @@ public class ParseTextService {
     public static BatchRawParseTextResponse parseTextInBatches(BatchParseTextRequest batchRequest, boolean manuallyReplaceDemonyms) {
         ExecutorService executorService = Executors.newFixedThreadPool(batchRequest.getNumOfThreads());
         logger.info("Running batch of {} elements using {} threads", batchRequest.getRequests().size(), batchRequest.getNumOfThreads());
+        logger.debug("Request: {}", batchRequest);
 
 
         StopWatch stopWatch = new StopWatch();
@@ -44,7 +47,7 @@ public class ParseTextService {
         Collection<CompletableFuture<RawParseTextResponse>> futuresList = batchRequest.getRequests().stream()
                 .map(parseTextRequest -> CompletableFuture.supplyAsync(() -> {
                     HashMap<?, ?> result;
-//                    logger.info("Running in thread {}", Thread.currentThread().getName());
+                    logger.debug("Running in thread {}", Thread.currentThread().getName());
                     try {
                         result = ParseManager.parseFromText(parseTextRequest.getText(), manuallyReplaceDemonyms, parseTextRequest.getLanguage());
                     } catch (Exception e) {   // try to give the user something useful
@@ -167,4 +170,13 @@ public class ParseTextService {
         return new BatchCondensedParseTextResponse(results, null, null);
     }
 
+    public static SingleStoreExternalFunctionResponse parseTextInBatchesForSingleStore(
+            SingleStoreExternalFunctionRequest request, int numOfThreads, boolean manuallyReplaceDemonyms
+    ) {
+        BatchCondensedParseTextResponse response = parseTextInBatchesCompressed(
+                ParseTextMapper.toRegularBatchRequest(request, numOfThreads), manuallyReplaceDemonyms);
+
+        logger.debug("Response: {}", ParseTextMapper.toSingleStoreResponse(response));
+        return ParseTextMapper.toSingleStoreResponse(response);
+    }
 }
