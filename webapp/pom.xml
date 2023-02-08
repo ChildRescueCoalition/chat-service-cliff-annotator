@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.crc</groupId>
             <artifactId>commons</artifactId>
-            <version>v1.56.0</version>
+            <version>LOCAL-SNAPSHOT</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>

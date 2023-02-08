@@ -32,6 +32,15 @@
         <url-pattern>/parse/text/batch/compressed</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>BatchParseTextSingleStoreServlet</servlet-name>
+        <servlet-class>org.mediacloud.cliff.servlet.BatchParseTextSingleStoreServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BatchParseTextSingleStoreServlet</servlet-name>
+        <url-pattern>/parse/text/batch/single-store</url-pattern>
+    </servlet-mapping>
+
 
     <servlet>
          <servlet-name>ParseNlpJsonServlet</servlet-name>
