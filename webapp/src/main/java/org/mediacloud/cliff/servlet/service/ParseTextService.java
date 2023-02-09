@@ -34,7 +34,6 @@ public class ParseTextService {
     public static final String COUNTY_FEATURE_CODE = "ADM2";
     public static final String STATE_FEATURE_CODE = "ADM1";
     public static final String COUNTRY_FEATURE_CODE = "PCLI";
-    public static final String POPULATED_AREAS_CLASS = "P";
 
     public static BatchRawParseTextResponse parseTextInBatches(BatchParseTextRequest batchRequest, boolean manuallyReplaceDemonyms) {
         ExecutorService executorService = Executors.newFixedThreadPool(batchRequest.getNumOfThreads());
@@ -92,14 +91,20 @@ public class ParseTextService {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
 
-    private static Optional<String> getCountyName(Mention mention) {
+    private static Optional<Pair<String, String>> getCityAndCountyName(Mention mention) {
         HashMap<?, ?> geonameInfo = (HashMap<?, ?>) ParseManager.getGeoNameInfo(mention.getId()).get("results");
 
+        String city = null;
         while (geonameInfo.containsKey("parent")) {
             if (COUNTY_FEATURE_CODE.equals(geonameInfo.get("featureCode"))) {
-                return Optional.of((String) geonameInfo.get("name"));
+                return Optional.of(Pair.of(city, (String) geonameInfo.get("name")));
             }
-            geonameInfo = (HashMap<?, ?>) geonameInfo.get("parent");
+
+            HashMap<?, ?> geonameInfoParent = (HashMap<?, ?>) geonameInfo.get("parent");
+            if (COUNTY_FEATURE_CODE.equals(geonameInfoParent.get("featureCode"))) {
+               city = (String) geonameInfo.get("name");
+            }
+            geonameInfo = geonameInfoParent;
         }
 
         return Optional.empty();
@@ -120,33 +125,20 @@ public class ParseTextService {
                     Pair<String, String> countryStateKey = Pair.of(mention.getCountryCode(), mention.getStateCode());
                     return !STATE_FEATURE_CODE.equals(mention.getFeatureCode()) || countryStateCountMap.get(countryStateKey).equals(1L);
                 })
-                // counties need to have the "county" field populated
-                .map(mention -> {
-                    if (COUNTY_FEATURE_CODE.equals(mention.getFeatureCode())) {
-                        return updateCounty(mention, mention.getPlace());
-                    }
-                    return mention;
-                })
-                // "places" need the county field populated.
-                .map(mention -> {
-                    if (!POPULATED_AREAS_CLASS.equals(mention.getFeatureClass())) {
-                        Optional<Mention> optMention = getCountyName(mention).map(county -> updateCounty(mention, county));
-                        if (optMention.isPresent()) {
-                            return optMention.get();
-                        }
-                    }
-                    return mention;
-                })
+                // Add the city and county where suited
+                .map(mention -> getCityAndCountyName(mention).map(p -> updateCountyAndCity(mention, p.getRight(), p.getLeft()))
+                        .orElse(mention))
                 .collect(Collectors.toList());
 
         return new ParseTextResponse(parseTextResponse.getExternalId(), condensedMentions);
     }
 
-    private static Mention updateCounty(Mention mention, String county) {
+    private static Mention updateCountyAndCity(Mention mention, String county, String city) {
         return mention.copy(
                 mention.getCountryCode(),
                 mention.getStateCode(),
                 county,
+                city,
                 mention.getPlace(),
                 mention.getLat(),
                 mention.getLon(),
