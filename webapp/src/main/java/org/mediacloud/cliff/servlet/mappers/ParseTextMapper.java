@@ -83,7 +83,8 @@ public class ParseTextMapper {
                         row.getFeatureCode(),
                         row.getFeatureClass(),
                         row.getMentionSource().getString(),
-                        row.getMentionSource().getCharIndex()
+                        row.getMentionSource().getCharIndex(),
+                        row.getId()
                 ).collect(Collectors.toList()));
     }
 
