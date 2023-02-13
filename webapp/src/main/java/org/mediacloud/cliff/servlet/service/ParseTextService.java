@@ -111,11 +111,14 @@ public class ParseTextService {
     }
 
     private static ParseTextResponse collapseMentions(ParseTextResponse parseTextResponse) {
-        Map<Pair<String, String>, Long> countryStateCountMap = toCountryStateCountMap(parseTextResponse.getMentions());
-        Map<String, Long> countryCountMap = toCountryMap(parseTextResponse.getMentions());
+        Collection<Mention> withoutEmptyCountryCodes = parseTextResponse.getMentions().stream()
+                .filter(m -> !m.getCountryCode().isEmpty())
+                .collect(Collectors.toList());
+        Map<Pair<String, String>, Long> countryStateCountMap = toCountryStateCountMap(withoutEmptyCountryCodes);
+        Map<String, Long> countryCountMap = toCountryMap(withoutEmptyCountryCodes);
 
         // Getting most specific place grouping by country and state
-        List<Mention> condensedMentions = parseTextResponse.getMentions().stream()
+        List<Mention> condensedMentions = withoutEmptyCountryCodes.stream()
                 // Getting most specific place grouping by country and state
                 .filter(mention -> {
                     if (COUNTRY_FEATURE_CODE.equals(mention.getFeatureCode()) && !countryCountMap.get(mention.getCountryCode()).equals(1L)) {
