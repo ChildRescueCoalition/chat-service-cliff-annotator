@@ -44,6 +44,7 @@ public class ParseTextService {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         Collection<CompletableFuture<RawParseTextResponse>> futuresList = batchRequest.getRequests().stream()
+                .filter(parseTextRequest -> !parseTextRequest.getText().isBlank())
                 .map(parseTextRequest -> CompletableFuture.supplyAsync(() -> {
                     HashMap<?, ?> result;
                     logger.debug("Running in thread {}", Thread.currentThread().getName());
