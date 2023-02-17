@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.crc</groupId>
             <artifactId>commons</artifactId>
-            <version>v1.58.0</version>
+            <version>v1.59.0</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
