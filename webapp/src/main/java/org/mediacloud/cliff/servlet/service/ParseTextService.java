@@ -48,8 +48,11 @@ public class ParseTextService {
                 .map(parseTextRequest -> CompletableFuture.supplyAsync(() -> {
                     HashMap<?, ?> result;
                     logger.debug("Running in thread {}", Thread.currentThread().getName());
+                    String cleanedText = parseTextRequest.getText()
+                            .replaceAll("[\u0002\u001F\u0083\u0003\u0090]", "");
+
                     try {
-                        result = ParseManager.parseFromText(parseTextRequest.getText(), manuallyReplaceDemonyms, parseTextRequest.getLanguage());
+                        result = ParseManager.parseFromText(cleanedText, manuallyReplaceDemonyms, parseTextRequest.getLanguage());
                     } catch (Exception e) {   // try to give the user something useful
                         logger.warn("Error parsing text of external id {}: {}",
                                 parseTextRequest.getExternalId(), parseTextRequest.getText(), e);
