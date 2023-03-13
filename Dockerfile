@@ -1,4 +1,4 @@
-FROM tomcat:9-jdk16-openjdk
+FROM tomcat:9.0.73-jdk17
 
 MAINTAINER German Robayo <grobayo@mahisoft.com>
 
