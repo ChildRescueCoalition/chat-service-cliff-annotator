@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -106,7 +108,7 @@ public class ParseTextService {
 
             HashMap<?, ?> geonameInfoParent = (HashMap<?, ?>) geonameInfo.get("parent");
             if (COUNTY_FEATURE_CODE.equals(geonameInfoParent.get("featureCode"))) {
-               city = (String) geonameInfo.get("name");
+                city = (String) geonameInfo.get("name");
             }
             geonameInfo = geonameInfoParent;
         }
@@ -164,9 +166,21 @@ public class ParseTextService {
                 .map(ParseTextMapper::toCondensed)
                 .map(ParseTextService::collapseMentions)
                 .filter(parseTextResponse -> !parseTextResponse.getMentions().isEmpty())
+                .peek(ParseTextService::removeDuplicateMentions)
                 .collect(Collectors.toList());
 
         return new BatchCondensedParseTextResponse(results, null, null);
+    }
+
+    public static void removeDuplicateMentions(ParseTextResponse response) {
+        Map<Integer, Mention> mentionsMap = response.getMentions().stream()
+                .collect(Collectors.toMap(
+                        Mention::getId,
+                        Function.identity(),
+                        BinaryOperator.minBy(Comparator.comparing(m -> m.getMentionSource().getCharIndex()))));
+
+        response.getMentions().clear();
+        response.getMentions().addAll(mentionsMap.values());
     }
 
     public static SingleStoreExternalFunctionResponse parseTextInBatchesForSingleStore(
