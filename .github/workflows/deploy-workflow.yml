@@ -61,8 +61,8 @@ jobs:
       - name: Read tag and commit information
         id: version-tag
         run: |
-          echo "::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))"
-          echo "::set-output name=last-commit::$(git rev-parse --short HEAD)"
+          echo "version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_OUTPUT
+          echo "last-commit::$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Generate Develop Variables
         id: variables
@@ -73,15 +73,15 @@ jobs:
         run: |
           if [ "$GITHUB_BRANCH" != "refs/heads/master" ]
           then
-            echo "::set-output name=project-version::${VERSION_TAG}-SNAPSHOT"
-            echo "::set-output name=complete-version::${VERSION_TAG}-SNAPSHOT-${LAST_COMMIT}"
-            echo "::set-output name=docker-tag::${LAST_COMMIT}"
-            echo "::set-output name=is-release::false"
+            echo "project-version::${VERSION_TAG}-SNAPSHOT" >> $GITHUB_OUTPUT
+            echo "complete-version::${VERSION_TAG}-SNAPSHOT-${LAST_COMMIT}" >> $GITHUB_OUTPUT
+            echo "docker-tag::${LAST_COMMIT}" >> $GITHUB_OUTPUT
+            echo "is-release::false" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=project-version::${VERSION_TAG}"
-            echo "::set-output name=complete-version::${VERSION_TAG}"
-            echo "::set-output name=docker-tag::latest"
-            echo "::set-output name=is-release::true"
+            echo "project-version::${VERSION_TAG}" >> $GITHUB_OUTPUT
+            echo "complete-version::${VERSION_TAG}" >> $GITHUB_OUTPUT
+            echo "docker-tag::latest" >> $GITHUB_OUTPUT
+            echo "is-release::true" >> $GITHUB_OUTPUT
           fi
 
       - name: Load ka-build action
