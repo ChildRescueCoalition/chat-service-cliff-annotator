@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Turnstyle
-        uses: softprops/turnstyle@v1
+        uses: softprops/turnstyle@v2.3.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -106,7 +106,7 @@ jobs:
     env:
       KUBE_CONTEXT: ${{ secrets.KUBE_CONTEXT }}
       KUBECONFIG: "./config"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Load vpn-connect action
